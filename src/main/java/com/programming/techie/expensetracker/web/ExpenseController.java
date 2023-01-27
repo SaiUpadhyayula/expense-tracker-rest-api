@@ -1,9 +1,12 @@
 package com.programming.techie.expensetracker.web;
 
 import com.programming.techie.expensetracker.dto.ExpenseDto;
-import com.programming.techie.expensetracker.exception.ExpenseNotFoundException;
-import com.programming.techie.expensetracker.model.Expense;
 import com.programming.techie.expensetracker.service.ExpenseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,13 @@ public class ExpenseController {
 
     private final ExpenseService expenseService;
 
+    @Operation(summary = "Add an Expense")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Expense Created",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseDto.class))}),
+            @ApiResponse(responseCode = "400", description = "Invalid/Bad Request",
+                    content = @Content)})
     @PostMapping
     public ResponseEntity<Void> addExpense(@RequestBody ExpenseDto expenseDto) {
         String expenseId = expenseService.addExpense(expenseDto);
@@ -34,32 +44,54 @@ public class ExpenseController {
 
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
-    public void updateExpense(@RequestBody Expense expense) {
+    @Operation(summary = "Update an Expense")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Expense Updated",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseDto.class))}),
+            @ApiResponse(responseCode = "400", description = "Invalid/Bad Request",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Expense Not Found",
+                    content = @Content)})
+    public void updateExpense(@RequestBody ExpenseDto expense) {
         expenseService.updateExpense(expense);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Get All Expenses")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Get All Expenses",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseDto.class))})})
     public List<ExpenseDto> getAllExpenses() {
         return expenseService.getAllExpenses();
     }
 
-    @GetMapping("/{name}")
+    @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ExpenseDto getExpenseByName(@PathVariable String name) {
-        return expenseService.getExpense(name);
+    @Operation(summary = "Get an Expense")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Get Single Expense",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseDto.class))}),
+            @ApiResponse(responseCode = "404", description = "Expense Not Found",
+                    content = @Content)})
+    public ExpenseDto getExpense(@PathVariable String id) {
+        return expenseService.getExpense(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete an Expense")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Expense Deleted",
+                    content = {@Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseDto.class))}),
+            @ApiResponse(responseCode = "404", description = "Expense Not Found",
+                    content = @Content)})
     public void deleteExpense(@PathVariable String id) {
         expenseService.deleteExpense(id);
-    }
-
-    @ExceptionHandler({ExpenseNotFoundException.class})
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Cannot Find Expense with the given data")
-    public void handleException() {
-        // Do Nothing
     }
 
 }

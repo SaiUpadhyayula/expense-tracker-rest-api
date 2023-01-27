@@ -1,6 +1,7 @@
 package com.programming.techie.expensetracker.service;
 
 import com.programming.techie.expensetracker.dto.ExpenseDto;
+import com.programming.techie.expensetracker.exception.ExpenseNotFoundException;
 import com.programming.techie.expensetracker.model.Expense;
 import com.programming.techie.expensetracker.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,26 +24,27 @@ public class ExpenseService {
         return expenseRepository.insert(expense).getId();
     }
 
-    public void updateExpense(Expense expense) {
-        Expense savedExpense = expenseRepository.findById(expense.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+    public void updateExpense(ExpenseDto expenseDto) {
+        Expense expense = mapFromDto(expenseDto);
+        Expense savedExpense = expenseRepository.findById(expenseDto.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 String.format("Cannot Find Expense by ID %s", expense.getId())));
         savedExpense.setExpenseName(expense.getExpenseName());
         savedExpense.setExpenseCategory(expense.getExpenseCategory());
         savedExpense.setExpenseAmount(expense.getExpenseAmount());
 
-        expenseRepository.save(expense);
+        expenseRepository.save(savedExpense);
     }
 
-    public ExpenseDto getExpense(String name) {
-        Expense expense = expenseRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException(String.format("Cannot Find Expense by Name - %s", name)));
+    public ExpenseDto getExpense(String id) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new ExpenseNotFoundException(String.format("Cannot Find Expense by ID - %s", id)));
         return mapToDto(expense);
     }
 
     public List<ExpenseDto> getAllExpenses() {
         return expenseRepository.findAll()
                 .stream()
-                .map(this::mapToDto).collect(Collectors.toList());
+                .map(this::mapToDto).toList();
     }
 
     public void deleteExpense(String id) {
